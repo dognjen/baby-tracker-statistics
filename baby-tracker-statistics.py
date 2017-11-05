@@ -4,14 +4,18 @@ from datetime import datetime
 import plotly.plotly as py
 import plotly.graph_objs as go
 
-parser = OptionParser()
+# constants
+MINUTES_IN_DAY = 1440
 
+# read from console
+parser = OptionParser()
 parser.add_option("-u", "--username", dest="username", help="input username for plotly.", metavar="UNAME")
 parser.add_option("-k", "--apikey", dest="apikey", help="input apikey for plotly.", metavar="APIKEY")
 
+# parse arguments
 (options, args) = parser.parse_args()
+py.sign_in(options['username'], options['apikey'])
 
-MINUTES_IN_DAY = 1440
 
 def clean_data(data):
     clean_data = {} # key - recorded dates, value - list of naps in that day
@@ -73,3 +77,26 @@ def clean_data(data):
         clean_data[sleep_datetime].append(sleep_duration)
 
     return clean_data
+
+
+def number_of_naps(data):
+    x = list(data.keys())
+    y = list(map(lambda x : len(x), data.values()))
+
+    d = [go.Bar(x=x, y=y)]
+    py.iplot(d)
+
+def daily_sum_naps(data):
+    x = list(data.keys())
+    y = list(map(lambda x: sum(x), data.values()))
+
+    d = [go.Bar(x=x, y=y)]
+    py.iplot(d)
+
+def daily_avg_naps(data):
+    x = list(data.keys())
+    y = list(map(lambda x: sum(x)/len(x), data.values()))
+
+    d = [go.Bar(x=x, y=y)]
+    py.iplot(d)
+
