@@ -2,6 +2,7 @@ from optparse import OptionParser
 from datetime import datetime
 
 import plotly.plotly as py
+import plotly.graph_objs as go
 
 parser = OptionParser()
 
@@ -10,24 +11,16 @@ parser.add_option("-k", "--apikey", dest="apikey", help="input apikey for plotly
 
 (options, args) = parser.parse_args()
 
-
 MINUTES_IN_DAY = 1440
 
-
-def longest_nap(data):
-    return
-
-
 def clean_data(data):
-    x = [] # recorded dates
-    y = [] # number of minutes slept in each date
+    clean_data = {} # key - recorded dates, value - list of naps in that day
     time_carried_over = 0 # time sleeping that gets carried over to next date
 
     for i, row in enumerate(data):
 
         # initialize values
         new_date = False
-        time_not_carried_over = time_carried_over
 
         # parse date and time
         # sleep_datetime; contains datetime
@@ -38,8 +31,8 @@ def clean_data(data):
         sleep_datetime = datetime(year=int('20' + sleep_date[2].split(' ')[0]), month=int(sleep_date[1]), day=int(sleep_date[0]))
 
         # check if date already in list
-        if sleep_datetime not in x:
-            x.append(sleep_datetime)
+        if sleep_datetime not in clean_data:
+            clean_data[sleep_datetime] = []
             new_date = True # new date added to list; flag set to True
 
         # parse sleep duration
@@ -60,10 +53,6 @@ def clean_data(data):
             else:
                 hours = 0
                 minutes = row[2].split(' min')[0]
-        else:
-            if sleep_datetime not in x:
-                y.append(0)
-            continue
 
         # calculate minutes
         sleep_duration = 60 * int(hours) + int(minutes)
@@ -72,16 +61,15 @@ def clean_data(data):
         # ex: started_sleeping -> 23h, sleep_duration -> 7h => time_not_carried_over -> 1h, time_carried_over -> 6h
         if started_sleeping + sleep_duration > MINUTES_IN_DAY:
             time_carried_over = (started_sleeping + sleep_duration) - MINUTES_IN_DAY
-            time_not_carried_over += (sleep_duration - time_carried_over)
-            sleep_duration = time_not_carried_over
+            time_not_carried_over = (sleep_duration - time_carried_over)
+            clean_data[sleep_datetime].append(time_not_carried_over)
+            continue
 
-        # check: if date is new, append sum of time sleeping else add sleep_duration to current value
-        if new_date:
-            y.append(sleep_duration + time_not_carried_over)
+        # check if need to add carried time
+        if new_date and time_carried_over > 0:
+            clean_data[sleep_datetime].append(time_carried_over)
             time_carried_over = 0
-        else:
-            idx = x.index(sleep_datetime)
-            y[idx] += sleep_duration
 
-    return x, y
+        clean_data[sleep_datetime].append(sleep_duration)
 
+    return clean_data
