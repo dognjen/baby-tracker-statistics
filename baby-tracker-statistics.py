@@ -80,6 +80,13 @@ def clean_data(data):
 
 
 def number_of_naps(data):
+    """
+    Number of naps per day.
+
+    :param data: daily naps
+    :return: None
+    """
+
     x = list(data.keys())
     y = list(map(lambda x : len(x), data.values()))
 
@@ -87,6 +94,13 @@ def number_of_naps(data):
     py.iplot(d)
 
 def daily_sum_naps(data):
+    """
+    Sum of daily naps in minutes.
+
+    :param data: daily naps
+    :return: None
+    """
+
     x = list(data.keys())
     y = list(map(lambda x: sum(x), data.values()))
 
@@ -94,9 +108,51 @@ def daily_sum_naps(data):
     py.iplot(d)
 
 def daily_avg_naps(data):
+    """
+    Daily average of all naps.
+
+    :param data: daily naps
+    :return: None
+    """
+
     x = list(data.keys())
     y = list(map(lambda x: sum(x)/len(x), data.values()))
 
     d = [go.Bar(x=x, y=y)]
     py.iplot(d)
 
+def moving_average_daily_sleep(data, N):
+    """
+    Method calculates a moving average of daily sleep and plots it.
+
+    :param data: daily naps
+    :param N: average window of size N
+    :return: None
+    """
+
+    cumsum, moving_avgs = [0], []
+    daily_sleep = list(map(lambda x: sum(x), data.values()))
+
+    for i, minutes in enumerate(daily_sleep, 1):
+        cumsum.append(cumsum[i - 1] + minutes)
+        if i >= N:
+            moving_avg = (cumsum[i] - cumsum[i - N]) / N
+            moving_avgs.append(moving_avg)
+
+    d = [go.Scatter(x=list(range(len(moving_avgs))), y=moving_avgs)]
+    py.iplot(d)
+
+# test
+with open('baby_sleep.csv', newline='') as csvfile:
+    import csv
+    spamreader = csv.reader(csvfile, delimiter=',', quotechar='|')
+
+    next(spamreader)
+    data = clean_data(spamreader)
+
+    # plotting
+    number_of_naps(data)
+    daily_sum_naps(data)
+    daily_avg_naps(data)
+    moving_average_daily_sleep(data, 5)
+    moving_average_daily_sleep(data, 7)
